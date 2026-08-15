@@ -1,0 +1,21 @@
+{
+  "name": "aiboyfriend-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "全栈 AI 男友（陈屿）后端：手写轻量 Agent + SQLite 记忆 + WebPush 离线推送。个人学习作品集，禁止商用。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "web-push": "^3.6.7"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

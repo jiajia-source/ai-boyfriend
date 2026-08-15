@@ -1,0 +1,39 @@
+# Render Blueprint 部署配置
+# 用法：Render 控制台 → New → Blueprint → 连接此 GitHub 仓库 → 按提示把标了 sync:false 的密钥项手动填好 → 创建。
+# 密钥不会进仓库（.gitignore 已屏蔽 .env）；持久化记忆用下方 disks 挂载。
+services:
+  - type: web
+    name: aiboyfriend-chenyu
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/config
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DEEPSEEK_MODEL
+        value: deepseek-chat
+      - key: PORT
+        value: "3000"
+      - key: DATA_DIR
+        value: /var/data
+      - key: VAPID_EMAIL
+        value: mailto:you@example.com
+      - key: AZURE_SPEECH_REGION
+        value: eastasia
+      # ↓↓↓ 以下 4 项必须在 Render 控制台手动填写（值都在你本机 aiboyfriend/server/.env 里） ↓↓↓
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: AZURE_SPEECH_KEY
+        sync: false
+    disks:
+      - name: chenyu-data
+        mountPath: /var/data
+        sizeGB: 1

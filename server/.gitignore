@@ -1,0 +1,15 @@
+# 依赖
+node_modules/
+
+# 环境变量（含所有密钥，严禁提交）
+.env
+
+# 数据库（单文件，含全部记忆，不入库）
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# 系统
+.DS_Store
+*.log

@@ -1,0 +1,19 @@
+{
+  "name": "陈屿 · AI男友",
+  "short_name": "陈屿",
+  "description": "全栈 AI 男友陪伴（个人学习作品集，禁止商用）",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f8",
+  "theme_color": "#f7f7f8",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

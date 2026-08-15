@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>陈屿 · AI男友</title>
+  <meta name="theme-color" content="#f7f7f8" />
+  <meta name="description" content="陈屿 · 全栈 AI 男友陪伴（个人学习作品集）" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <!-- TailwindCSS（学习项目用 CDN，免构建；生产建议用 CLI 构建） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-md mx-auto h-screen flex flex-col bg-white shadow-sm relative">
+
+    <!-- 顶部栏 -->
+    <header class="flex items-center justify-between px-4 py-3 bg-white border-b sticky top-0 z-10">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">屿</div>
+        <div>
+          <div class="font-semibold text-gray-800 leading-tight">陈屿</div>
+          <div class="text-xs text-green-500 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>在线
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-gray-500">
+        <button onclick="MemoryPanel.open()" title="记忆档案" class="hover:text-blue-500">🧠</button>
+        <button onclick="Settings.open()" title="设置" class="hover:text-blue-500">⚙️</button>
+      </div>
+    </header>
+
+    <!-- 消息区 -->
+    <main id="messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50"></main>
+
+    <!-- 输入区 -->
+    <footer class="p-3 bg-white border-t">
+      <div class="flex items-end gap-2">
+        <button id="voiceToggle" onclick="Chat.toggleVoice()" title="朗读开关"
+          class="shrink-0 w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">🔇</button>
+        <button id="micBtn" onclick="Chat.toggleMic()" title="语音输入"
+          class="shrink-0 w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">🎤</button>
+        <textarea id="input" rows="1" placeholder="和陈屿说点什么…"
+          class="flex-1 resize-none rounded-2xl bg-gray-100 px-4 py-2 max-h-32 focus:outline-none"></textarea>
+        <button id="sendBtn" onclick="Chat.send()"
+          class="shrink-0 w-10 h-10 rounded-full bg-blue-500 text-white font-medium flex items-center justify-center">➤</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 记忆档案面板 -->
+  <div id="memoryModal" class="modal hidden">
+    <div class="modal-card max-w-md w-full max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h2 class="font-semibold text-lg">🧠 记忆档案</h2>
+        <button onclick="MemoryPanel.close()" class="text-gray-400 text-xl">×</button>
+      </div>
+      <div class="p-3 bg-amber-50 text-xs text-amber-700 border-b">
+        ⚠️ 记忆保存在后端服务器（SQLite），换手机/清缓存不会丢。但这是个人项目，请自行备份，服务停了数据可能丢失。
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-5">
+        <section>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-medium text-gray-700">📌 基础档案</h3>
+            <button onclick="MemoryPanel.showAddForm()" class="text-xs text-blue-500">+ 新增</button>
+          </div>
+          <div id="profileList" class="space-y-2"></div>
+        </section>
+        <section>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-medium text-gray-700">💬 对话长期记忆</h3>
+            <button onclick="MemoryPanel.clearAll()" class="text-xs text-red-500">清空全部</button>
+          </div>
+          <div id="longtermList" class="space-y-2"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置面板 -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card max-w-md w-full">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h2 class="font-semibold text-lg">⚙️ 设置</h2>
+        <button onclick="Settings.close()" class="text-gray-400 text-xl">×</button>
+      </div>
+      <div class="p-4 space-y-4">
+        <label class="flex items-center justify-between">
+          <div>
+            <div class="font-medium text-gray-700">主动推送通知</div>
+            <div class="text-xs text-gray-400">陈屿空闲时主动关心你（锁屏也能收到）</div>
+          </div>
+          <input id="pushToggle" type="checkbox" class="w-5 h-5" />
+        </label>
+        <p class="text-xs text-gray-400 leading-relaxed">
+          提示：iOS 需把本网页「添加到主屏幕」成为 App 才能收离线推送；安卓在浏览器或桌面版均可。
+        </p>
+        <button onclick="Settings.save()" class="w-full py-2 rounded-lg bg-blue-500 text-white">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 脚本（顺序：api -> push -> voice -> memory -> settings -> chat） -->
+  <script src="/js/api.js"></script>
+  <script src="/js/push.js"></script>
+  <script src="/js/voice.js"></script>
+  <script src="/js/memory-panel.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/chat.js"></script>
+  <script>
+    // 注册 Service Worker（PWA 离线 + 推送）
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(e => console.warn('SW 注册失败', e));
+    }
+    Chat.init();
+    Push.init(); // 请求通知权限并订阅（用户允许后才推送）
+  </script>
+</body>
+</html>
