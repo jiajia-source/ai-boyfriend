@@ -95,26 +95,64 @@ npx web-push generate-vapid-keys
 
 ---
 
-## 五、Render 部署（后端 + 前端一次部署）
+## 五、云端常驻部署（电脑关机也能用）
 
-1. 注册 https://render.com ，New → Web Service → 连接你的 GitHub 仓库。
-2. 配置：
-   - **Root Directory**：`server`（让 Render 以该目录为项目根）
-   - **Build Command**：`npm install`
-   - **Start Command**：`node server.js`
-   - **Environment**：选 `Node`
-3. 在 Render 的 **Environment Variables** 里添加：
-   - `DEEPSEEK_API_KEY`
-   - `DEEPSEEK_MODEL` = `deepseek-chat`
-   - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_EMAIL`
-   - `AZURE_SPEECH_KEY` / `AZURE_SPEECH_REGION`（可选，不填则用浏览器原生语音）
-   - `PORT` 由 Render 自动注入，无需手动设
-4. 部署完成后，Render 会给一个 `https://xxx.onrender.com` 地址，打开即是网页版。
-5. **手机收推送**：
-   - **安卓**：用 Chrome 打开地址 → 允许通知 → 即可在锁屏收到系统推送。
-   - **iOS（关键）**：必须用 Safari 打开 → 点「分享」→ **添加到主屏幕** → 从桌面图标进入 → 允许通知。只有作为 PWA 安装后，iOS 才能收离线推送。
+目标：把陈屿部署到 Render 云端，**24/7 在线**——你电脑关了、睡觉了，手机照样能打开聊天、收推送。
 
-> Render 免费版会休眠，定时推送在休眠期间不会触发，访问一次即唤醒。如需常驻可升级付费实例。
+> 代价：记忆数据存在 Render 的持久盘（云端），不再是纯本地；免费档节点在海外，国内访问偶尔偏慢属正常。代码建议放 **GitHub 私有仓库**（只有你能看，符合"自己用"）。
+
+### 步骤 0：把代码推到 GitHub 私有仓库
+（需你本人在自己电脑上操作，涉及 GitHub 账号授权）
+
+```bash
+# 1) 登录 GitHub（浏览器授权一次）
+gh auth login
+
+# 2) 在项目目录创建私有仓库并一键推送
+cd aiboyfriend
+gh repo create aiboyfriend-chenyu --private --source=. --remote=origin --push
+```
+
+> 若不想用 gh，也可在 GitHub 网页手动 New 一个 **Private** 仓库，然后：
+> `git remote add origin https://github.com/你的名/aiboyfriend-chenyu.git`
+> `git branch -M main` → `git push -u origin main`
+
+推送时注意：**`.env` 已被 `.gitignore` 屏蔽，不会进仓库**（密钥安全）。进仓库的只有 `.env.example` 模板。
+
+### 步骤 1：Render 连仓库（Blueprint 一键建服务）
+1. 打开 https://dashboard.render.com → **New** → **Blueprint**。
+2. 连接你的 GitHub 账号，选中 `aiboyfriend-chenyu` 私有仓库。
+3. Render 会自动读取仓库里的 `render.yaml`：建好 Web 服务、挂 1GB 持久盘（`/var/data`，记忆不丢）、列出环境变量。
+4. 点 **Apply** / **Create** 开始部署（首次构建约 1–2 分钟）。
+
+### 步骤 2：填写 4 个密钥环境变量
+`render.yaml` 里标了 `sync:false` 的 4 项**不会自动填**，需在 Render 控制台手动填（值都在你本机 `aiboyfriend/server/.env` 里）：
+- `DEEPSEEK_API_KEY` = `sk-...`
+- `VAPID_PUBLIC_KEY` = `...`
+- `VAPID_PRIVATE_KEY` = `...`
+- `AZURE_SPEECH_KEY`（可选，留空则用浏览器原生语音）
+
+另外建议把 `VAPID_EMAIL` 从占位 `mailto:you@example.com` 改成你的真实邮箱（WebPush 规范建议）。
+填完 **Save Changes** 触发重新部署。
+
+### 步骤 3：拿到地址
+部署完成后，Render 给一个 `https://aiboyfriend-chenyu.onrender.com`（具体名看你填的服务名）。这就是云端地址，**电脑关机也不影响**。
+
+### 步骤 4：保活（关键！否则免费档会休眠）
+Render 免费 Web Service **15 分钟无请求就休眠**，手机打开会卡十几秒冷启动，定时推送也会停。用免费监控 ping 它即可常驻：
+
+1. 注册 https://uptimerobot.com （免费版够用）。
+2. 新增 **Monitor** → 类型 HTTP(s) → URL 填 `https://你的地址.onrender.com/api/config` → 间隔 **5 分钟**。
+3. 保存。此后云端服务一直被 ping 着，不会睡。
+
+> 保活由 UptimeRobot 云端完成，**不依赖你电脑**——这正是"电脑关机也能用"的关键。
+
+### 步骤 5：手机使用
+- **安卓**：Chrome 打开云端地址 → 允许通知 → 锁屏收推送。
+- **iOS**：Safari 打开 → 分享 → **添加到主屏幕** → 从桌面图标进 → 允许通知（必须装成 PWA 才能锁屏收推送）。
+
+### 数据说明
+记忆存在 Render 持久盘 `/var/data/*.db`，部署、重启都不丢。要备份/迁移，可在 Render Shell 里导出，或定期下载 disk 快照。
 
 ---
 
@@ -147,3 +185,31 @@ npx web-push generate-vapid-keys
 - ✅ 记忆永久在后端，换手机/清缓存不丢
 - ✅ PWA：manifest + service-worker，点击通知打开聊天页
 - ✅ 仅个人学习，禁止商用
+
+---
+
+## 八、纯本地自用（不部署到公网 / 不推 GitHub）
+
+适合「自己用、不对外开放」的场景：服务跑在你自己的电脑上，手机连过来。
+
+### 前置
+- 电脑装好 **Node.js 18+**（含 npm）。
+- 本项目 `.env` 已配好 DeepSeek Key 与 VAPID 密钥，无需再改。
+
+### 步骤
+1. 解压本项目到任意目录。
+2. 双击 **`start.bat`** → 首次会自动 `npm install` 然后启动服务。
+3. 看到 `listening on 3000` 后，电脑浏览器打开 `http://localhost:3000` 即可聊天。
+4. **手机访问二选一**：
+   - **A. 同一 WiFi（最简单，但 iOS 锁屏推送受限）**：手机浏览器开 `http://你电脑局域网IP:3000`（电脑上 `ipconfig` 查 IPv4，如 `192.168.1.20`）。
+   - **B. Cloudflare Tunnel（推荐，手机任意网络 + 真·锁屏推送）**：另开窗口双击 **`tunnel.bat` → 终端给一个 `https://xxxx.trycloudflare.com` 公网 HTTPS 地址，手机打开它即可；建议「添加到主屏幕」变 App**。
+     > 首次用 Tunnel 前需装 `cloudflared` 并加入 PATH：
+     > https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+5. 首次打开页面会请求通知权限，允许后陈屿可主动推送（方案 B 的 HTTPS 下 iOS/安卓均能锁屏收推送）。
+
+### 说明
+- 记忆存在你电脑的 SQLite（`server/data/*.db`），只要你不动这个文件就一直保留。
+- 想彻底停服务：关闭 `start.bat` 窗口、关掉 `tunnel.bat` 窗口即可。
+- `render.yaml` / 本地 git 仓库留着无害，以后想上 Render 公网部署也方便。
+
+
